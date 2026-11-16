@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¡BUS Y TREN!</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&display=swap">
+<style>
+:root{
+  --bg:#eef2ff;--panel:#ffffff;--ink:#14204a;--muted:#5a6694;--line:#c9d2f3;
+  --bus:#e8730c;--train:#0a9f8f;--hit:#e0207a;--chip:#f2f5ff;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#0c1432;--panel:#16214a;--ink:#f1f4ff;--muted:#9fabd8;--line:#2b3a73;--bus:#ffa233;--train:#2fd9c4;--hit:#ff3d95;--chip:#1d2a5c;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#0c1432;--panel:#16214a;--ink:#f1f4ff;--muted:#9fabd8;--line:#2b3a73;--bus:#ffa233;--train:#2fd9c4;--hit:#ff3d95;--chip:#1d2a5c;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-weight:500;line-height:1.4}
+main{max-width:1100px;margin:0 auto;padding:14px 14px 36px}
+.top{text-align:center;padding:4px 0 10px}
+.clock{font-size:clamp(6rem,26vw,13rem);font-weight:800;line-height:.95;letter-spacing:-.04em;font-variant-numeric:tabular-nums;display:inline-block}
+.clock.hit{color:var(--hit);animation:thump .7s ease-in-out infinite alternate}
+.cl{color:var(--muted);font-size:1.15rem;font-weight:800}
+@keyframes thump{to{transform:scale(1.08) rotate(-2deg)}}
+#scene{position:relative;overflow:hidden;border-radius:24px;border:3px solid var(--line);background:#1a2140}
+.lane{position:relative}
+.tag{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:8px 14px;color:#f1f4ff;font-weight:800}
+.tag em{font-style:normal;color:#aab6e6;font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chips span{border-radius:999px;padding:1px 9px;font-weight:800;font-size:.85rem;background:var(--c);color:#0c1432}
+.chips span.hit{background:var(--hit);color:#fff}
+.surf{position:relative;height:118px;overflow:hidden}
+.road{background:#2c3242}
+.road:before{content:"";position:absolute;left:0;right:0;top:calc(50% - 3px);height:6px;background:repeating-linear-gradient(90deg,#f4d35e 0 36px,transparent 36px 72px)}
+.road:after{content:"";position:absolute;left:0;right:0;top:6px;bottom:6px;border-top:3px solid #cfd5e8;border-bottom:3px solid #cfd5e8}
+.rail{background:#6b6258}
+.rail:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,#3d2f24 0 12px,transparent 12px 34px)}
+.rail:after{content:"";position:absolute;left:0;right:0;top:30%;bottom:30%;border-top:6px solid #c9ced8;border-bottom:6px solid #c9ced8}
+.veh{position:absolute;top:50%;transform:translate(-50%,-50%);font-size:4.6rem;line-height:1;z-index:2;filter:drop-shadow(0 4px 0 rgba(0,0,0,.35))}
+.bd{position:absolute;left:50%;top:-14px;transform:translateX(-50%) scale(.4);opacity:0;background:var(--c);color:#0c1432;font-size:1.3rem;font-weight:800;border-radius:999px;padding:2px 12px;transition:.15s}
+.veh.near .bd{opacity:1;transform:translateX(-50%) scale(1)}
+.beam{position:absolute;left:50%;top:0;bottom:0;border-left:3px dashed #fff;opacity:.55;pointer-events:none;z-index:3}
+.beam.hit{border-left-color:var(--hit);opacity:1}
+#big{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,15,40,.6);z-index:5;pointer-events:none;text-align:center}
+#big.on{display:flex}
+#bn{font-size:clamp(6rem,32vw,17rem);font-weight:800;line-height:1;color:#ffe66d;-webkit-text-stroke:5px var(--hit);paint-order:stroke fill;animation:thump .5s ease-in-out infinite alternate}
+#bc{color:#fff;font-size:clamp(1.1rem,3.4vw,1.8rem);font-weight:800}
+.conf{position:absolute;left:var(--x);top:55%;font-size:1.8rem;pointer-events:none;animation:fly 1.9s ease-out forwards;z-index:6}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(420deg);opacity:0}}
+.panel{background:var(--panel);border:2px solid var(--line);border-radius:20px;padding:14px;margin-top:14px}
+.ctrl{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.fld{display:flex;flex-direction:column;gap:3px;font-weight:800}
+.fld input[type=number]{width:100px;font:800 1.4rem/1 inherit;font-family:inherit;padding:9px 11px;border-radius:12px;border:3px solid var(--c);background:var(--chip);color:var(--ink)}
+.spd{display:flex;flex-direction:column;gap:5px;font-weight:800;min-width:160px}
+.spd input{accent-color:var(--hit)}
+button{font:800 1rem/1 inherit;font-family:inherit;cursor:pointer;border:0;border-radius:999px;padding:13px 20px;color:#fff;background:var(--hit)}
+button.ghost{background:var(--chip);color:var(--ink);border:2px solid var(--line);padding:11px 15px}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.clock.hit,#bn{animation:none}.conf{display:none}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><div class="clock" id="clk">0</div><div class="cl">minutos</div></div>
+
+  <section id="scene" aria-live="polite">
+    <div class="lane" style="--c:var(--bus)">
+      <div class="tag"><span>🚌 Autobús</span><em id="n0">cada 5 min</em><span class="chips" id="c0"></span></div>
+      <div class="surf road" id="s0"></div>
+    </div>
+    <div class="lane" style="--c:var(--train)">
+      <div class="tag"><span>🚆 Tren</span><em id="n1">cada 12 min</em><span class="chips" id="c1"></span></div>
+      <div class="surf rail" id="s1"></div>
+    </div>
+    <div class="beam" id="beam"></div>
+    <div id="big"><div id="bn">60</div><div id="bc"></div></div>
+  </section>
+
+  <section class="panel">
+    <div class="ctrl">
+      <label class="fld" style="--c:var(--bus)">🚌 Autobús cada<input id="p0" type="number" min="2" max="30" value="5" inputmode="numeric"></label>
+      <label class="fld" style="--c:var(--train)">🚆 Tren cada<input id="p1" type="number" min="2" max="30" value="12" inputmode="numeric"></label>
+      <label class="spd">Velocidad: <span id="sv">2</span> min/s<input id="spd" type="range" min="1" max="12" value="2"></label>
+      <button id="go">▶ Empezar</button>
+      <button class="ghost" id="step">+1 minuto</button>
+      <button class="ghost" id="reset">↺ Reiniciar</button>
+    </div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const ICON=['🚌','🚆'],COL=['--bus','--train'],W=3;
+let P=[5,12],t=0,last=0,running=false,raf=null,tp=0;
+const pools=[new Map(),new Map()];
+
+function setup(){
+  cancelAnimationFrame(raf);running=false;t=0;last=0;
+  P=[parseInt($('p0').value,10),parseInt($('p1').value,10)];
+  const ok=P.every(x=>x>=2&&x<=30);
+  $('go').disabled=!ok;$('step').disabled=!ok;$('go').textContent='▶ Empezar';
+  pools.forEach(m=>{m.forEach(e=>e.remove());m.clear()});
+  ['c0','c1'].forEach(id=>$(id).innerHTML='');
+  $('big').classList.remove('on');$('clk').classList.remove('hit');$('beam').classList.remove('hit');
+  if(ok){$('n0').textContent='cada '+P[0]+' min';$('n1').textContent='cada '+P[1]+' min';render()}
+  else{$('clk').textContent='?'}
+}
+function render(){
+  $('clk').textContent=Math.floor(t+1e-9);
+  for(let i=0;i<2;i++){
+    const p=P[i],pool=pools[i],host=$('s'+i);
+    const k0=Math.max(1,Math.ceil((t-W*.58)/p)),k1=Math.floor((t+W*.58)/p),keep=new Set();
+    for(let k=k0;k<=k1;k++){
+      keep.add(k);let e=pool.get(k);
+      if(!e){e=document.createElement('div');e.className='veh';e.style.setProperty('--c','var('+COL[i]+')');
+        e.innerHTML=ICON[i]+'<b class="bd">'+(k*p)+'</b>';host.appendChild(e);pool.set(k,e)}
+      const d=t-k*p;e.style.left=(50-d/W*100)+'%';e.classList.toggle('near',Math.abs(d)<0.3);
+    }
+    pool.forEach((e,k)=>{if(!keep.has(k)){e.remove();pool.delete(k)}});
+  }
+}
+function chip(i,m,hit){const s=document.createElement('span');s.textContent=m;if(hit)s.className='hit';$('c'+i).appendChild(s)}
+function ev(m){
+  const a=P.map(p=>m%p===0),all=a.every(Boolean);
+  a.forEach((x,i)=>{if(x)chip(i,m,all)});
+  if(all)celebrate(m);
+}
+function celebrate(m){
+  running=false;t=m;render();
+  $('clk').classList.add('hit');$('beam').classList.add('hit');$('go').textContent='▶ Continuar';
+  $('bn').textContent=m;$('bc').textContent='¡Coinciden! mcm('+P[0]+', '+P[1]+') = '+(P[0]/gcd(P[0],P[1])*P[1]);
+  $('big').classList.add('on');
+  if(!matchMedia('(prefers-reduced-motion:reduce)').matches){
+    const em=['🎉','✨','⭐','🎊','🥳'],st=$('scene');
+    for(let i=0;i<36;i++){const s=document.createElement('span');s.className='conf';s.textContent=em[i%5];
+      s.style.setProperty('--x',(6+Math.random()*88)+'%');s.style.setProperty('--dx',(Math.random()*200-100)+'px');s.style.setProperty('--dy',(Math.random()*340-250)+'px');
+      st.appendChild(s);setTimeout(()=>s.remove(),2000)}
+  }
+}
+function resume(){$('big').classList.remove('on');$('clk').classList.remove('hit');$('beam').classList.remove('hit')}
+function loop(now){
+  if(!running)return;
+  t+=(now-tp)/1000*(+$('spd').value);tp=now;
+  while(running&&last<Math.floor(t)){last++;ev(last)}
+  render();if(running)raf=requestAnimationFrame(loop);
+}
+$('go').onclick=()=>{
+  if(running){running=false;$('go').textContent='▶ Seguir';return}
+  resume();running=true;$('go').textContent='⏸ Pausa';tp=performance.now();raf=requestAnimationFrame(loop);
+};
+$('step').onclick=()=>{
+  running=false;resume();$('go').textContent='▶ Seguir';
+  last=Math.floor(t+1e-9)+1;t=last;ev(last);render();
+};
+$('reset').onclick=setup;
+$('spd').oninput=()=>$('sv').textContent=$('spd').value;
+['p0','p1'].forEach(id=>$(id).addEventListener('change',setup));
+setup();
+</script>
+</body>
+</html>
