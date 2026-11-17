@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Martillazo doble: calcula el mcm</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&display=swap">
+<style>
+:root{
+  --bg:#eef2ff;--panel:#ffffff;--ink:#14204a;--muted:#5a6694;--line:#c9d2f3;--hit:#e0207a;--chip:#f2f5ff;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#0c1432;--panel:#16214a;--ink:#f1f4ff;--muted:#9fabd8;--line:#2b3a73;--hit:#ff3d95;--chip:#1d2a5c;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#0c1432;--panel:#16214a;--ink:#f1f4ff;--muted:#9fabd8;--line:#2b3a73;--hit:#ff3d95;--chip:#1d2a5c;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-weight:500;line-height:1.4}
+main{max-width:1050px;margin:0 auto;padding:16px 14px 40px}
+h1{font-size:clamp(1.7rem,5vw,2.8rem);font-weight:800;margin:0 0 12px;letter-spacing:-.02em;line-height:1.05}
+.panel{background:var(--panel);border:2px solid var(--line);border-radius:22px;padding:16px;margin-bottom:14px}
+.ctrl{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.fld{display:flex;flex-direction:column;gap:4px;font-weight:800}
+.fld input{width:150px;font:800 1.9rem/1 inherit;font-family:inherit;padding:10px 14px;border-radius:14px;border:3px solid var(--hit);background:var(--chip);color:var(--ink)}
+button{font:800 1rem/1 inherit;font-family:inherit;cursor:pointer;border:0;border-radius:999px;padding:14px 22px;color:#fff;background:var(--hit)}
+button.ghost{background:var(--chip);color:var(--ink);border:2px solid var(--line);padding:11px 16px}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.ex{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center;font-weight:800}
+.ex button{padding:8px 14px;font-size:.95rem}
+#stage{position:relative;overflow:hidden;background:#1a2140;border-color:#2b3a73;color:#f1f4ff;padding:10px 12px 16px}
+.work{position:relative;height:clamp(220px,40vw,300px);display:flex;align-items:center;justify-content:space-around;gap:10px}
+.bench{position:absolute;left:4%;right:4%;bottom:8px;height:16px;border-radius:8px;background:#8a5a33;box-shadow:0 5px 0 #5e3c20}
+.block{position:relative;z-index:1;margin-bottom:22px;min-width:1.4em;padding:.08em .3em;border-radius:.16em;background:linear-gradient(160deg,#6a7ab8,#47558c);color:#fff;font-size:var(--fs,6rem);font-weight:800;line-height:1.05;letter-spacing:-.03em;text-align:center;box-shadow:0 8px 0 #2d386a;font-variant-numeric:tabular-nums;transition:opacity .2s,transform .25s}
+.block.shake{animation:shake .45s}
+.block.gone{opacity:0;transform:scale(.2)}
+@keyframes shake{20%{transform:translate(-10px,4px) rotate(-3deg)}40%{transform:translate(9px,-3px) rotate(3deg)}60%{transform:translate(-6px,2px)}100%{transform:none}}
+@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.12)}100%{transform:none}}
+.ham{position:absolute;z-index:4;left:calc(50% - .5em);top:0;font-size:clamp(3.6rem,10vw,6rem);line-height:1;transform-origin:85% 90%;opacity:0;pointer-events:none}
+.ham.swing{animation:swing .7s ease-in forwards}
+@keyframes swing{0%{opacity:1;transform:rotate(60deg) translate(70px,-40px)}55%{opacity:1;transform:rotate(60deg) translate(90px,-60px)}75%{opacity:1;transform:rotate(-30deg) translate(-110px,70px)}100%{opacity:0;transform:rotate(-30deg) translate(-110px,70px)}}
+.spark{position:absolute;left:50%;top:44%;font-size:2rem;z-index:5;pointer-events:none;animation:fly 1s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(300deg);opacity:0}}
+#msg{text-align:center;min-height:2.8em;font-size:clamp(1.05rem,2.8vw,1.4rem);font-weight:800;margin:4px 0 8px}
+.cap{color:#aab6e6;font-weight:800;margin:8px 0 6px}
+.tray{display:flex;flex-wrap:wrap;gap:8px;min-height:60px;align-items:center;position:relative;z-index:3}
+.tile{font-size:1.9rem;font-weight:800;line-height:1;padding:8px 15px;border-radius:12px;color:#0c1432;box-shadow:0 4px 0 rgba(0,0,0,.35);opacity:0;transition:opacity .4s,filter .4s}
+.tile.in{opacity:1}
+.tile.in.win{outline:4px solid #fff;outline-offset:2px;box-shadow:0 0 22px 4px rgba(255,255,255,.55)}
+.tile.in.lose{opacity:.22;filter:grayscale(.8)}
+.pnl h2{margin:0 0 10px;font-size:1.2rem;font-weight:800}
+.tbl{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;font-weight:800;font-size:clamp(1rem,2.8vw,1.4rem)}
+.tbl .h{color:var(--muted);font-size:.9rem}
+.tbl .c{background:var(--chip);border-radius:10px;padding:8px 4px;animation:pop .5s}
+.tbl .m{background:var(--hit);color:#fff}
+.eq{text-align:center;font-size:clamp(1.6rem,5.6vw,3.2rem);font-weight:800;line-height:1.25;min-height:1.3em;word-break:break-word}
+.eq .t{display:inline-block;margin:0 2px}
+.eq.big{animation:pop .6s}
+.eq b{color:var(--hit)}
+.chk{margin-top:8px;text-align:center;color:var(--muted);font-weight:800;font-size:1.05rem;min-height:1.4em}
+@media (prefers-reduced-motion:reduce){.block.shake,.tbl .c,.eq.big{animation:none}.ham.swing{animation-duration:.01s}.spark{display:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Martillazo doble: ¡calcula el mcm!</h1>
+
+  <section class="panel">
+    <div class="ctrl">
+      <label class="fld">Primer número<input id="na" type="number" min="2" max="99999" value="12" inputmode="numeric"></label>
+      <label class="fld">Segundo número<input id="nb" type="number" min="2" max="99999" value="18" inputmode="numeric"></label>
+      <button id="go">🔨 ¡Golpe!</button>
+      <button class="ghost" id="reset">↺ Reiniciar</button>
+    </div>
+    <div class="ex"><span>Prueba con:</span>
+      <button class="ghost" data-n="12,18">12 y 18</button><button class="ghost" data-n="60,84">60 y 84</button>
+      <button class="ghost" data-n="8,12">8 y 12</button><button class="ghost" data-n="7,13">7 y 13</button>
+      <button class="ghost" data-n="45,50">45 y 50</button><button class="ghost" data-n="36,36">36 y 36</button>
+    </div>
+  </section>
+
+  <section class="panel" id="stage" aria-live="polite">
+    <div class="work" id="work">
+      <div class="block" id="ba">12</div>
+      <div class="block" id="bb">18</div>
+      <div class="bench"></div>
+      <div class="ham" id="ham">🔨</div>
+    </div>
+    <div id="msg">Pulsa «¡Golpe!» para romper los dos números a la vez.</div>
+    <p class="cap" id="capa">Piezas del primer número</p>
+    <div class="tray" id="ta"></div>
+    <p class="cap" id="capb">Piezas del segundo número</p>
+    <div class="tray" id="tb"></div>
+  </section>
+
+  <section class="panel pnl" id="tp" style="display:none">
+    <h2>De cada primo, nos quedamos con su mayor exponente</h2>
+    <div class="tbl" id="tbl"></div>
+  </section>
+
+  <section class="panel pnl" id="fp" style="display:none">
+    <h2 style="text-align:center">Multiplicamos lo que nos hemos quedado</h2>
+    <div class="eq" id="eq"></div>
+    <div class="chk" id="chk"></div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const SUPD='⁰¹²³⁴⁵⁶⁷⁸⁹',sup=e=>e>1?String(e).split('').map(d=>SUPD[d]).join(''):'';
+const col=p=>({2:'#ffb347',3:'#4fd8c4',5:'#ff7eb6',7:'#b99cff',11:'#7cc0ff',13:'#a8e063'})[p]||`hsl(${(p*47)%360} 75% 68%)`;
+const fmt=n=>n.toLocaleString('es-ES');
+function factors(n){const f=[];for(let d=2;d*d<=n;d++)while(n%d===0){f.push(d);n/=d}if(n>1)f.push(n);return f}
+function fontFor(n){const d=String(n).length,r=[0,6,6,5.2,4.4,3.8][d]||3.4;return 'min('+r+'rem,'+(r*2.1)+'vw)'}
+function retrig(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c)}
+let A=12,B=18,busy=false,done=false;
+
+function reset(){
+  A=parseInt($('na').value,10);B=parseInt($('nb').value,10);
+  const ok=[A,B].every(x=>Number.isInteger(x)&&x>=2&&x<=99999);
+  busy=false;done=false;
+  ['ta','tb'].forEach(i=>$(i).innerHTML='');
+  $('tbl').innerHTML='';$('tp').style.display='none';$('fp').style.display='none';
+  $('eq').innerHTML='';$('chk').textContent='';$('eq').classList.remove('big');
+  [['ba',A],['bb',B]].forEach(([id,v])=>{const b=$(id);b.className='block';b.textContent=ok?v:'?';if(ok)b.style.setProperty('--fs',fontFor(v))});
+  $('capa').textContent='Piezas del '+(ok?A:'primer número');$('capb').textContent='Piezas del '+(ok?B:'segundo número');
+  $('go').disabled=!ok;
+  $('msg').textContent=ok?'Pulsa «¡Golpe!» para romper los dos números a la vez.':'Escribe dos números enteros entre 2 y 99999.';
+}
+function sparks(k){
+  for(let i=0;i<k;i++){const s=document.createElement('span');s.className='spark';s.textContent=['💥','✨','⭐'][i%3];
+    s.style.setProperty('--dx',(Math.random()*500-250)+'px');s.style.setProperty('--dy',(Math.random()*240-160)+'px');
+    $('stage').appendChild(s);setTimeout(()=>s.remove(),1050)}
+}
+function cnt(l){const c={};l.forEach(p=>c[p]=(c[p]||0)+1);return c}
+async function strike(){
+  if(busy||$('go').disabled)return;if(done)reset();
+  busy=true;$('go').disabled=true;
+  const la=factors(A),lb=factors(B),h=$('ham');
+  h.classList.remove('swing');void h.offsetWidth;h.classList.add('swing');
+  await sleep(430);
+  retrig($('ba'),'shake');retrig($('bb'),'shake');
+  const oa=$('ba').getBoundingClientRect(),ob=$('bb').getBoundingClientRect(),w=$('work').getBoundingClientRect();
+  const mk=(list,tray,o)=>list.map(p=>{const t=document.createElement('div');t.className='tile';t.style.background=col(p);t.textContent=p;t.dataset.p=p;$(tray).appendChild(t);return {t,o}});
+  const all=[...mk(la,'ta',oa),...mk(lb,'tb',ob)];
+  const fin=all.map(x=>x.t.getBoundingClientRect());
+  await sleep(120);
+  sparks(16);$('ba').classList.add('gone');$('bb').classList.add('gone');
+  all.forEach((x,i)=>{const f=fin[i],fx=f.left+f.width/2,fy=f.top+f.height/2,ox=x.o.left+x.o.width/2,oy=x.o.top+x.o.height/2;
+    x.t.style.transition='none';x.t.style.transform=`translate(${ox-fx}px,${oy-fy}px) scale(.2)`});
+  void $('stage').offsetWidth;
+  all.forEach((x,i)=>{const f=fin[i],fx=f.left+f.width/2,fy=f.top+f.height/2;
+    const sx=w.left+50+Math.random()*(w.width-100),sy=w.top+30+Math.random()*(w.height-100);
+    x.t.classList.add('in');x.t.style.transition='transform .8s cubic-bezier(.2,.9,.3,1.25),opacity .2s';x.t.style.transitionDelay=(i*22)+'ms';
+    x.t.style.transform=`translate(${sx-fx}px,${sy-fy}px) rotate(${Math.random()*50-25}deg)`});
+  const pr=[la.length===1?A:0,lb.length===1?B:0].filter(Boolean);
+  $('msg').textContent='¡Los dos se rompen de un solo golpe!'+(pr.length?' (El '+pr.join(' y el ')+(pr.length>1?' son primos y salen enteros.)':' es primo y sale entero.)'):'');
+  await sleep(1500+all.length*22);
+  $('msg').textContent='Las piezas se ordenan…';
+  all.forEach((x,i)=>{x.t.style.transition='transform 1s cubic-bezier(.3,1.2,.4,1),opacity .4s,filter .4s';x.t.style.transitionDelay=(i*50)+'ms';x.t.style.transform='none'});
+  await sleep(1100+all.length*50);
+
+  const ca=cnt(la),cb=cnt(lb);
+  const primes=[...new Set([...la,...lb])].sort((a,b)=>a-b);
+  $('msg').textContent='Para cada primo, nos quedamos con el que aparece más veces.';
+  $('tp').style.display='block';
+  $('tbl').innerHTML=['Primo','En el '+A,'En el '+B,'Nos quedamos con'].map(x=>`<div class="h">${x}</div>`).join('');
+  $('tp').scrollIntoView({behavior:'smooth',block:'nearest'});
+  const parts=[];let L=1;
+  for(const p of primes){
+    const ea=ca[p]||0,eb=cb[p]||0,m=Math.max(ea,eb),winRow=ea>=eb?'ta':'tb';
+    document.querySelectorAll('.tile').forEach(t=>{if(+t.dataset.p!==p)return;
+      t.classList.add(t.parentNode.id===winRow?'win':'lose')});
+    const show=e=>e?p+sup(e):'—';
+    const col2=`<div class="c" style="color:${col(p)}">${p}</div>`;
+    $('tbl').insertAdjacentHTML('beforeend',col2+`<div class="c">${show(ea)}</div><div class="c">${show(eb)}</div><div class="c m">${p}${sup(m)||''}</div>`);
+    parts.push([p,m]);L*=Math.pow(p,m);
+    await sleep(900);
+  }
+  $('msg').textContent='Las piezas marcadas son las que nos quedamos.';
+  await sleep(500);
+  $('fp').style.display='block';
+  $('eq').innerHTML='mcm('+A+', '+B+') = '+parts.map(([p,m])=>`<span class="t" style="color:${col(p)}">${p}${sup(m)}</span>`).join(' × ')+' = <b>'+fmt(L)+'</b>';
+  retrig($('eq'),'big');
+  $('chk').textContent='Comprobación: '+fmt(L)+' ÷ '+A+' = '+fmt(L/A)+' ✔  ·  '+fmt(L)+' ÷ '+B+' = '+fmt(L/B)+' ✔';
+  $('fp').scrollIntoView({behavior:'smooth',block:'nearest'});
+  busy=false;done=true;$('go').disabled=false;
+}
+$('go').onclick=strike;
+$('reset').onclick=reset;
+['na','nb'].forEach(id=>{$(id).addEventListener('change',reset);$(id).addEventListener('keydown',e=>{if(e.key==='Enter'){reset();strike()}})});
+document.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{const [x,y]=b.dataset.n.split(',');$('na').value=x;$('nb').value=y;reset()});
+reset();
+</script>
+</body>
+</html>
